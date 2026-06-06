@@ -506,9 +506,9 @@ class TestValidatePromptEdgeCases:
     """Tests for edge cases and input validation."""
 
     def test_empty_string(self):
-        """Empty string should be handled gracefully."""
+        """Empty string should be handled gracefully — non-blocking."""
         result = validate("")
-        assert result["passed"] is False
+        assert result["passed"] is True
         assert result["score"] == 75
 
     def test_none_raises_typeerror(self):
@@ -527,10 +527,10 @@ class TestValidatePromptEdgeCases:
             validate(["test"])
 
     def test_whitespace_only_string(self):
-        """Whitespace-only string should be handled."""
+        """Whitespace-only string should be handled — non-blocking."""
         result = validate("   ")
         assert isinstance(result["score"], int)
-        assert result["passed"] is False
+        assert result["passed"] is True
 
     def test_very_long_prompt(self):
         """Very long prompt should be handled without errors."""

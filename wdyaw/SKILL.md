@@ -10,7 +10,7 @@ description: >
   "just do it" or rejects clarification.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   category: prompt-engineering
   origin: WDYAW
   sources:
@@ -93,7 +93,7 @@ When generating the final prompt:
 --- END GENERATED PROMPT ---
 ```
 
-## P01-P03 Detection
+## P01-P03 Detection (Deterministic Layer)
 
 During the interview, actively detect and correct these failure patterns. **Use the deterministic validation script** for consistent, thorough detection:
 
@@ -101,6 +101,8 @@ During the interview, actively detect and correct these failure patterns. **Use 
 from wdyaw.scripts.validate_prompt import validate
 report = validate(prompt_text)
 ```
+
+The deterministic layer is **non-blocking by default**. It returns a full report with recommendations and only blocks when the score falls below 50 (catastrophic failure).
 
 **P01 — Pink Elephant Effect (Negative Constraints):**
 Detects negation words: "don't," "never," "avoid," "do not," "prevent," "must not." Each match is classified by severity based on surrounding context:
@@ -117,21 +119,57 @@ Detect hedge words: "somewhat," "maybe," "if possible," "when appropriate," "try
 **P03 — Format Ambiguity:**
 Check whether the prompt contains explicit format specification: format name, structural example, or schema definition. If none, ask: "What format should the output take?" Offer common options: paragraph, bullet points, JSON, markdown table, XML.
 
-**Validation workflow:** Before delivering the final prompt, run it through the validation script. Address ERROR-level P01 matches before presenting the output. Consider pairing WARNING-level negatives with positive alternatives. Leave CRITICAL safety constraints unchanged.
+## P04-P06 Detection (Probabilistic Layer)
 
-## Anti-Patterns
+The probabilistic layer catches **semantic edge cases** that deterministic regex misses. It uses LLM-based analysis (or built-in semantic pattern matching when no LLM is available):
 
-Common mistakes that break the interview flow. Watch for these in your own behavior:
+```python
+from wdyaw.scripts.validate_prompt_llm import validate_llm
+report = validate_llm(prompt_text)
+```
 
-1. **Question Dumping** — Asking "What format, audience, and length do you want?" in a single turn. Each turn gets ONE primary question. Wait for the answer.
+**P04 — Semantic Negation (Indirect Negatives):**
+Detects indirect negation phrases: "refrain from," "steer clear of," "eschew," "abstain from," "stay away from." These activate forbidden concepts through ironic process theory just like direct negation. Treat as ERROR severity.
 
-2. **Premature Generation** — Drafting a prompt before TCRTE coverage reaches 80% or turn 7. If you catch yourself writing "Here's a prompt..." in turns 1-5, stop.
+**P05 — Implied Negative Constraints:**
+Detects positive phrasing that implies negation: "keep it simple" (implies "don't be complex"), "use plain English" (implies "don't use technical language"), "stick to the point" (implies "don't wander"). These create ambiguity about what to avoid. Treat as WARNING severity.
 
-3. **Conflict Avoidance** — Agreeing with a user's incorrect assumption ("Yes, AI can predict stock prices with 100% accuracy") to keep the conversation smooth. Correct gently: "Actually, that's outside what current models can reliably do. Let's adjust the task."
+**P06 — Contextual Hedge Words:**
+Detects hedge words in ambiguous contexts: "use relatively simple language," "keep it fairly brief," "make it quite clear." The combination of hedge + expectation creates broad probability distributions. Treat as WARNING severity.
 
-4. **Scope Drift** — Offering to write code, debug errors, or give business advice. Stay in prompt engineering lane. If asked: "I can help you phrase that as a prompt, but I won't write the implementation."
+## Hybrid Validation (Recommended)
 
-5. **Filler Openers** — Starting responses with "Great!", "Certainly!", "Sure thing!" These waste tokens and signal low confidence. Start with the substance.
+Combine both layers with confidence-based routing for production use:
+
+```python
+from wdyaw.scripts.validate_prompt_hybrid import validate_hybrid
+
+# Fast mode: deterministic only (default, <1ms)
+report = validate_hybrid(prompt_text, mode="fast")
+
+# Standard mode: deterministic + probabilistic, non-blocking
+report = validate_hybrid(prompt_text, mode="standard")
+
+# Strict mode: deterministic + probabilistic, blocks on any issue
+report = validate_hybrid(prompt_text, mode="strict")
+```
+
+**Mode behavior:**
+
+| Mode | Layers | Blocking | Use case |
+|------|--------|----------|----------|
+| `fast` | Deterministic only | Score < 50 | Real-time validation, high throughput |
+| `standard` | Both | Score < 50 | Production prompts, balanced quality/speed |
+| `strict` | Both | Any issue | Safety-critical, maximum quality |
+
+The hybrid orchestrator:
+1. Runs deterministic layer (always)
+2. Runs probabilistic layer (standard/strict modes)
+3. Deduplicates overlapping findings
+4. Calculates weighted hybrid score (deterministic 60%, probabilistic 40%)
+5. Returns unified report with merged findings and raw sub-reports
+
+**Validation workflow:** Before delivering the final prompt, run it through the hybrid validator in `standard` mode. Address ERROR-level matches before presenting the output. Consider pairing WARNING-level negatives with positive alternatives. Leave CRITICAL safety constraints unchanged.
 
 ## Quality Gate
 
@@ -153,7 +191,7 @@ Before delivering the generated prompt, verify:
 Import and use these functions directly for consistent, tested operations:
 
 ```python
-from wdyaw import sanitize, validate, assemble
+from wdyaw import sanitize, validate, validate_llm, validate_hybrid, assemble
 
 # Sanitize user input
 cleaned, metadata = sanitize(user_input)
@@ -161,9 +199,15 @@ cleaned, metadata = sanitize(user_input)
 # Assemble prompt from TCRTE components
 prompt = assemble(components, format_type="markdown")
 
-# Validate against P01-P03
+# Validate against P01-P03 (deterministic, non-blocking)
 report = validate(prompt)
-assert report["passed"]  # Fix issues if False
+assert report["score"] >= 50  # Fix issues if below threshold
+
+# Validate against P04-P06 (probabilistic, semantic edge cases)
+report = validate_llm(prompt)
+
+# Hybrid validation (recommended)
+report = validate_hybrid(prompt, mode="standard")
 ```
 
 ### Input Sanitization
@@ -177,14 +221,14 @@ cleaned, metadata = sanitize(user_input)
 This detects patterns like "ignore previous instructions," strips zero-width characters, normalizes Unicode (NFKC), and scores risk. Raises `SanitizationError` if input is blocked.
 
 ### Prompt Validation
-After assembling the prompt, validate it against P01-P03 failure patterns:
+After assembling the prompt, validate it against failure patterns:
 
 ```python
-from wdyaw import validate
-report = validate(prompt_text)
+from wdyaw import validate_hybrid
+report = validate_hybrid(prompt_text, mode="standard")
 ```
 
-Returns a structured report: `{passed: bool, checks: [...], score: 0-100}`. If `passed` is false, fix the issues before delivering.
+Returns a unified report: `{passed: bool, mode: str, checks: [...], score: 0-100, deterministic: {...}, probabilistic: {...}}`. If `passed` is false, fix the issues before delivering.
 
 ### Prompt Assembly
 Assemble TCRTE components into a formatted prompt:
