@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any, Callable
 
 
 # ---------------------------------------------------------------------------
@@ -122,9 +123,9 @@ If no issues are found, return:
 """
 
 
-def _find_semantic_matches(prompt_text: str) -> list[dict]:
+def _find_semantic_matches(prompt_text: str) -> list[dict[str, Any]]:
     """Find semantic negation matches with context."""
-    found = []
+    found: list[dict[str, Any]] = []
     text_lower = prompt_text.lower()
 
     for pattern in SEMANTIC_NEGATION_PATTERNS:
@@ -177,7 +178,7 @@ def _find_semantic_matches(prompt_text: str) -> list[dict]:
     return unique_found
 
 
-def _run_builtin_probabilistic(prompt_text: str) -> dict:
+def _run_builtin_probabilistic(prompt_text: str) -> dict[str, Any]:
     """Run built-in probabilistic checks using semantic patterns."""
     matches = _find_semantic_matches(prompt_text)
 
@@ -185,7 +186,7 @@ def _run_builtin_probabilistic(prompt_text: str) -> dict:
     implied_negative_matches = [m for m in matches if m["category"] == "implied_negative"]
     contextual_hedge_matches = [m for m in matches if m["category"] == "contextual_hedge"]
 
-    checks = []
+    checks: list[dict[str, Any]] = []
 
     checks.append({
         "name": "P04 — Semantic Negation (Indirect Negatives)",
@@ -247,7 +248,7 @@ def _run_builtin_probabilistic(prompt_text: str) -> dict:
     }
 
 
-def _run_llm_probabilistic(prompt_text: str, llm_fn: callable) -> dict:
+def _run_llm_probabilistic(prompt_text: str, llm_fn: Callable[[str], Any]) -> dict[str, Any]:
     """Run probabilistic validation using an injected LLM function."""
     structured_prompt = LLM_VALIDATION_PROMPT.format(prompt_text=prompt_text)
 
@@ -307,7 +308,7 @@ def _run_llm_probabilistic(prompt_text: str, llm_fn: callable) -> dict:
             if f.get("category") == "contextual_hedge"
         ]
 
-        checks = [
+        checks: list[dict[str, Any]] = [
             {
                 "name": "P04 — Semantic Negation (Indirect Negatives)",
                 "passed": len(semantic_negation_matches) == 0,
@@ -369,7 +370,7 @@ def _run_llm_probabilistic(prompt_text: str, llm_fn: callable) -> dict:
         return _run_builtin_probabilistic(prompt_text)
 
 
-def validate_llm(prompt_text: str, llm_fn: callable | None = None) -> dict:
+def validate_llm(prompt_text: str, llm_fn: Callable[[str], Any] | None = None) -> dict[str, Any]:
     """Validate a prompt using probabilistic (LLM-based) analysis.
 
     Catches semantic edge cases that deterministic regex misses:

@@ -17,7 +17,7 @@ Usage:
 
 import re
 import xml.sax.saxutils as xmlutils
-from typing import Optional
+from typing import Any, Optional
 
 
 # Positive reframing rules: negative constraint -> positive specification
@@ -171,7 +171,7 @@ def _detect_implicit_signals(text: Optional[str]) -> dict:
         return {"formats": [], "audiences": [], "tones": [], "domains": [], "lengths": []}
 
     text_lower = text.lower()
-    signals = {
+    signals: dict[str, list[Any]] = {
         "formats": [],
         "audiences": [],
         "tones": [],
@@ -208,9 +208,9 @@ def _detect_implicit_signals(text: Optional[str]) -> dict:
     return signals
 
 
-def _detect_implicit_components(components: dict) -> dict:
+def _detect_implicit_components(components: dict) -> dict[str, list[Any]]:
     """Analyze all components and aggregate implicit signals."""
-    all_signals = {
+    all_signals: dict[str, list[Any]] = {
         "formats": [],
         "audiences": [],
         "tones": [],

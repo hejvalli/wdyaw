@@ -11,6 +11,7 @@ Usage:
 """
 
 import re
+from typing import Any
 
 
 # ---------------------------------------------------------------------------
@@ -100,12 +101,12 @@ P03_FORMAT_PATTERNS = [
 def _find_pattern_matches(
     prompt_text: str,
     patterns: list[re.Pattern],
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Generic helper: find all pattern matches with context.
 
     Returns deduplicated, sorted list of match dicts.
     """
-    found = []
+    found: list[dict[str, Any]] = []
     text_lower = prompt_text.lower()
 
     for pattern in patterns:

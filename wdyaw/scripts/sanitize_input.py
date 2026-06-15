@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from typing import Any
 
 
 class SanitizationError(ValueError):
@@ -46,8 +47,8 @@ def sanitize(
     min_length: int = MIN_INPUT_LENGTH,
     max_length: int = MAX_INPUT_LENGTH,
     risk_threshold: float = RISK_THRESHOLD,
-) -> tuple[str, dict]:
-    metadata = {
+) -> tuple[str, dict[str, Any]]:
+    metadata: dict[str, Any] = {
         'original_length': len(user_input),
         'patterns_found': [],
         'was_modified': False,

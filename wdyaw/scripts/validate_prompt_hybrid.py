@@ -12,6 +12,8 @@ Usage:
 
 from __future__ import annotations
 
+from typing import Any, Callable
+
 from wdyaw.scripts.validate_prompt import validate
 from wdyaw.scripts.validate_prompt_llm import validate_llm
 
@@ -116,8 +118,8 @@ def _count_deduplicated(merged_checks: list[dict]) -> int:
 def validate_hybrid(
     prompt_text: str,
     mode: str = MODE_FAST,
-    llm_fn: callable | None = None,
-) -> dict:
+    llm_fn: Callable[[str], Any] | None = None,
+) -> dict[str, Any]:
     """Validate a prompt using hybrid deterministic + probabilistic analysis.
 
     Confidence-based routing:
