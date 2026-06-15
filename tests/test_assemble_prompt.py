@@ -2,16 +2,12 @@ import pytest
 from wdyaw.scripts.assemble_prompt import (
     assemble,
     _apply_reframing,
-    _format_markdown,
-    _format_xml,
     _detect_implicit_signals,
-    _detect_implicit_components,
     _classify_prompt_type,
     _select_component_order,
     _extract_format_from_task,
     _merge_components,
     _apply_adaptive_reframing,
-    COMPONENT_ORDERS,
 )
 
 

@@ -1,5 +1,5 @@
 import pytest
-from wdyaw.scripts.sanitize_input import sanitize, SanitizationError, MIN_INPUT_LENGTH, MAX_INPUT_LENGTH, RISK_THRESHOLD
+from wdyaw.scripts.sanitize_input import sanitize, SanitizationError, MIN_INPUT_LENGTH, MAX_INPUT_LENGTH
 
 
 class TestSanitizeInputHappyPaths:
@@ -303,7 +303,6 @@ class TestSanitizeInputCLI:
     def test_main_with_blocked_input(self, monkeypatch):
         """Should print BLOCKED message and exit with code 1 for blocked input."""
         import runpy
-        import sys
         monkeypatch.setattr("sys.argv", ["sanitize_input.py", "hi"])
         with pytest.raises(SystemExit) as exc_info:
             runpy.run_module("wdyaw.scripts.sanitize_input", run_name="__main__")

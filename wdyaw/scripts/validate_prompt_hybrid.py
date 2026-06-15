@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Hybrid prompt validation orchestrator.
 
 Combines deterministic + probabilistic validation with confidence-based routing:
@@ -11,6 +9,8 @@ Usage:
     from wdyaw.scripts.validate_prompt_hybrid import validate_hybrid
     report = validate_hybrid("Your prompt text here...", mode="standard")
 """
+
+from __future__ import annotations
 
 from wdyaw.scripts.validate_prompt import validate
 from wdyaw.scripts.validate_prompt_llm import validate_llm

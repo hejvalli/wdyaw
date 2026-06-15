@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Probabilistic prompt validation using LLM-based semantic analysis.
 
 Catches semantic edge cases that deterministic regex misses:
@@ -14,6 +12,8 @@ Usage:
     from wdyaw.scripts.validate_prompt_llm import validate_llm
     report = validate_llm("Your prompt text here...")
 """
+
+from __future__ import annotations
 
 import json
 import re

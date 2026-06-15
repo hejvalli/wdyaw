@@ -5,7 +5,6 @@ from wdyaw.scripts.validate_prompt import (
     _detect_p02,
     _detect_p03,
     _calculate_score,
-    _classify_p01_severity,
 )
 
 

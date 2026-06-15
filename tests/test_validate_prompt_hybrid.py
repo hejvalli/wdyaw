@@ -1,9 +1,6 @@
 import pytest
 from wdyaw.scripts.validate_prompt_llm import (
     validate_llm,
-    _find_semantic_matches,
-    _run_builtin_probabilistic,
-    _run_llm_probabilistic,
 )
 from wdyaw.scripts.validate_prompt_hybrid import (
     validate_hybrid,

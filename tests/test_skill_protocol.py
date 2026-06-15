@@ -1,4 +1,3 @@
-import pytest
 from wdyaw.scripts.assemble_prompt import assemble
 from wdyaw.scripts.validate_prompt import validate
 from wdyaw.scripts.validate_prompt_hybrid import validate_hybrid
